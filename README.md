@@ -36,7 +36,7 @@ assume localhost is a secure domain, even without SSL.
 
 ### Screenshot
 
-![Demo screenshot](docs/demo.png)
+![Demo screenshot](screenshot.png)
 
 ### Feature requests
 
