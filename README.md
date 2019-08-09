@@ -3,6 +3,7 @@
 ### Dependencies
 
 - [Go 1.12](https://golang.org/doc/install)
+- libx264
 
 ### Running the server
 
