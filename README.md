@@ -5,6 +5,12 @@
 - [Go 1.12](https://golang.org/doc/install)
 - libx264
 
+### Architecture
+
+![Architecture](docs/architecture.png)
+
+More info in [this blog post](https://viscarra.dev/post/webrtc-remote-screen/). 
+
 ### Running the server
 
 The server receives the following flags through the command line:
@@ -19,25 +25,25 @@ Allows to speficy a different [STUN](https://es.wikipedia.org/wiki/STUN) server,
 
 ### Usage
 
-Chrome 74+, Firefox 65+ are supported. Older versions (whitin reason) should be supported as well but YMMV.
+Chrome 74+, Firefox 66+, Safari 12.x are supported. Older versions (within reason) should be supported as well but YMMV.
 
-Build the _deployment_ package by runnning `make`. This should create a zip file with the 
+Build the _deployment_ package by runnning `make`. This should create a tar file with the 
 binary and web directory.
 
-Copy the archive to a remote server, unzip it and run `./agent`. The `agent` application assumes the web dir. is in the same directory. 
+Copy the archive to a remote server, decompress it and run `./agent`. The `agent` application assumes the web dir. is in the same directory. 
 
-WebRTC requires a _secure_ domain to run, the recommended approach towards this is to forward the agent port thru SSH:
+WebRTC requires a _secure_ domain to work, the recommended approach towards this is to forward the agent port thru SSH tunneling:
 
 ```bash
 ssh -L YOUR_LOCAL_PORT:localhost:9000 
 ```
 
-Then access the application on `http://localhost:YOUR_LOCAL_PORT`. Firefox and Chrome 
-assume localhost is a secure domain, even without SSL. 
+Then access the application on `http://localhost:YOUR_LOCAL_PORT`, localhost should be considered 
+secure by modern browsers.
 
 ### Screenshot
 
-![Demo screenshot](screenshot.png)
+![Demo screenshot](docs/screenshot.png)
 
 ### Feature requests
 
