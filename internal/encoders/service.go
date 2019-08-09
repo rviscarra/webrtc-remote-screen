@@ -1,14 +1,13 @@
-package encoding
+package encoders
 
 import (
-	"errors"
 	"image"
 	"io"
 )
 
 // Service creates encoder instances
 type Service interface {
-	NewEncoder(size image.Rectangle, frameRate int) (Encoder, error)
+	NewEncoder(codec VideoCodec, size image.Point, frameRate int) (Encoder, error)
 }
 
 // Encoder takes an image/frame and encodes it
@@ -26,11 +25,3 @@ const (
 	//VP8Codec vp8
 	VP8Codec
 )
-
-// NewEncoderServiceFor creates an encoder service for the specified codec
-func NewEncoderServiceFor(codec VideoCodec) (Service, error) {
-	if codec == H264Codec {
-		return &H264EncoderService{}, nil
-	}
-	return nil, errors.New("Not implemented")
-}

@@ -7,6 +7,8 @@ type ScreenGrabber interface {
 	Start()
 	Frames() <-chan *image.RGBA
 	Stop()
+	Fps() int
+	Screen() *Screen
 }
 
 // Screen TODO
@@ -17,6 +19,6 @@ type Screen struct {
 
 // Service TODO
 type Service interface {
-	CreateScreenGrabber(screen, fps int) (ScreenGrabber, error)
+	CreateScreenGrabber(screen Screen, fps int) (ScreenGrabber, error)
 	Screens() ([]Screen, error)
 }

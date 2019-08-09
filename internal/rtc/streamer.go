@@ -4,25 +4,32 @@ import (
 	"fmt"
 	"image"
 
+	"github.com/nfnt/resize"
 	"github.com/pion/webrtc/v2"
 	"github.com/pion/webrtc/v2/pkg/media"
-	"github.com/rviscarra/x-remote-viewer/internal/encoding"
+	"github.com/rviscarra/x-remote-viewer/internal/encoders"
 	"github.com/rviscarra/x-remote-viewer/internal/rdisplay"
 )
+
+func resizeImage(src *image.RGBA, target image.Point) *image.RGBA {
+	return resize.Resize(uint(target.X), uint(target.Y), src, resize.Lanczos3).(*image.RGBA)
+}
 
 type rtcStreamer struct {
 	track   *webrtc.Track
 	stop    chan struct{}
 	screen  *rdisplay.ScreenGrabber
-	encoder *encoding.Encoder
+	encoder *encoders.Encoder
+	size    image.Point
 }
 
-func newRTCStreamer(track *webrtc.Track, screen *rdisplay.ScreenGrabber, encoder *encoding.Encoder) videoStreamer {
+func newRTCStreamer(track *webrtc.Track, screen *rdisplay.ScreenGrabber, encoder *encoders.Encoder, size image.Point) videoStreamer {
 	return &rtcStreamer{
 		track:   track,
 		stop:    make(chan struct{}),
 		screen:  screen,
 		encoder: encoder,
+		size:    size,
 	}
 }
 
@@ -50,7 +57,8 @@ func (s *rtcStreamer) startStream() {
 }
 
 func (s *rtcStreamer) stream(frame *image.RGBA) error {
-	payload, err := (*s.encoder).Encode(frame)
+	resized := resizeImage(frame, s.size)
+	payload, err := (*s.encoder).Encode(resized)
 	if err != nil {
 		return err
 	}

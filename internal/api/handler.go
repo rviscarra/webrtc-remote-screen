@@ -30,7 +30,7 @@ func MakeHandler(webrtc rtc.Service, display rdisplay.Service) http.Handler {
 			return
 		}
 
-		peer, err := webrtc.CreatePeerConnection(req.Screen)
+		peer, err := webrtc.CreateRemoteScreenConnection(req.Screen, 20)
 		if err != nil {
 			handleError(w, err)
 			return

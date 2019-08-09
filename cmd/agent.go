@@ -10,7 +10,7 @@ import (
 	"syscall"
 
 	"github.com/rviscarra/x-remote-viewer/internal/api"
-	"github.com/rviscarra/x-remote-viewer/internal/encoding"
+	"github.com/rviscarra/x-remote-viewer/internal/encoders"
 	"github.com/rviscarra/x-remote-viewer/internal/rdisplay"
 	"github.com/rviscarra/x-remote-viewer/internal/rtc"
 )
@@ -36,14 +36,13 @@ func main() {
 		log.Fatalf("Can't get screens: %v", err)
 	}
 
-	var enc encoding.Service
-	enc, err = encoding.NewEncoderServiceFor(encoding.H264Codec)
+	var enc encoders.Service = &encoders.EncoderService{}
 	if err != nil {
-		log.Fatalf("Can't create an encoder of codec = %v", encoding.H264Codec)
+		log.Fatalf("Can't create an encoder of codec = %v", encoders.H264Codec)
 	}
 
 	var webrtc rtc.Service
-	webrtc = rtc.NewPionRtcService(*stunServer, video, enc)
+	webrtc = rtc.NewRemoteScreenService(*stunServer, video, enc)
 
 	mux := http.NewServeMux()
 

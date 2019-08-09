@@ -9,13 +9,13 @@ type videoStreamer interface {
 	close()
 }
 
-// PeerConnection Represents a WebRTC connection to a single peer
-type PeerConnection interface {
+// RemoteScreenConnection Represents a WebRTC connection to a single peer
+type RemoteScreenConnection interface {
 	io.Closer
 	ProcessOffer(offer string) (string, error)
 }
 
 // Service WebRTC service
 type Service interface {
-	CreatePeerConnection(screen int) (PeerConnection, error)
+	CreateRemoteScreenConnection(screenIx int, fps int) (RemoteScreenConnection, error)
 }

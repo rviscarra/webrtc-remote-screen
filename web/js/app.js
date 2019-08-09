@@ -54,20 +54,29 @@ function createOffer(pc, { audio, video }) {
   });
 }
 
-function startRemoteSession(screen, remoteVideoNode) {
+function startRemoteSession(screen, remoteVideoNode, stream) {
   let pc;
+
   return Promise.resolve().then(() => {
     pc = new RTCPeerConnection({
       iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
     });
     pc.ontrack = (evt) => {
+      console.info('ontrack triggered');
+      
       remoteVideoNode.srcObject = evt.streams[0];
       remoteVideoNode.play();
     };
+
+    stream && stream.getTracks().forEach(track => {
+      pc.addTrack(track, stream);
+    })
     return createOffer(pc, { audio: false, video: true });
   }).then(offer => {
+    console.info(offer);
     return startSession(offer, screen);
   }).then(answer => {
+    console.info(answer);
     return pc.setRemoteDescription(new RTCSessionDescription({
       sdp: answer,
       type: 'answer'
@@ -75,9 +84,10 @@ function startRemoteSession(screen, remoteVideoNode) {
   }).then(() => pc);
 }
 
+let peerConnection = null;
 document.addEventListener('DOMContentLoaded', () => {
+  
   let selectedScreen = 0;
-  let peerConnection = null;
   const remoteVideo = document.querySelector('#remote-video');
   const screenSelect = document.querySelector('#screen-select');
   const startStop = document.querySelector('#start-stop');
@@ -114,14 +124,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
   startStop.addEventListener('click', () => {
     enableStartStop(false);
+
+    const userMediaPromise =  (adapter.browserDetails.browser === 'safari') ?
+      navigator.mediaDevices.getUserMedia({ video: true }) : 
+      Promise.resolve(null);
     if (!peerConnection) {
-      startRemoteSession(selectedScreen, remoteVideo).then(pc => {
-        remoteVideo.style.setProperty('visibility', 'visible');
-        peerConnection = pc;
-      }).catch(showError).then(() => {
-        enableStartStop(true);
-        setStartStopTitle('Stop');
-      });
+      userMediaPromise.then(stream => {
+        return startRemoteSession(selectedScreen, remoteVideo, stream).then(pc => {
+          remoteVideo.style.setProperty('visibility', 'visible');
+          peerConnection = pc;
+        }).catch(showError).then(() => {
+          enableStartStop(true);
+          setStartStopTitle('Stop');
+        });
+      })
     } else {
       peerConnection.close();
       peerConnection = null;
@@ -131,3 +147,9 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 });
+
+window.addEventListener('beforeunload', () => {
+  if (peerConnection) {
+    peerConnection.close();
+  }
+})

@@ -13,19 +13,15 @@ type XVideoProvider struct{}
 // XScreenGrabber captures video from a X server
 type XScreenGrabber struct {
 	fps    int
-	bounds image.Rectangle
+	screen Screen
 	frames chan *image.RGBA
 	stop   chan struct{}
 }
 
 // CreateScreenGrabber Creates an screen capturer for the X server
-func (*XVideoProvider) CreateScreenGrabber(screen, fps int) (ScreenGrabber, error) {
-	var bounds image.Rectangle
-	if screen >= 0 {
-		bounds = screenshot.GetDisplayBounds(screen)
-	}
+func (*XVideoProvider) CreateScreenGrabber(screen Screen, fps int) (ScreenGrabber, error) {
 	return &XScreenGrabber{
-		bounds: bounds,
+		screen: screen,
 		fps:    fps,
 		frames: make(chan *image.RGBA),
 		stop:   make(chan struct{}),
@@ -61,7 +57,7 @@ func (g *XScreenGrabber) Start() {
 				close(g.frames)
 				return
 			default:
-				img, err := screenshot.CaptureRect(g.bounds)
+				img, err := screenshot.CaptureRect(g.screen.Bounds)
 				if err != nil {
 					return
 				}
@@ -79,6 +75,16 @@ func (g *XScreenGrabber) Start() {
 // Stop sends a stop signal to the capture loop
 func (g *XScreenGrabber) Stop() {
 	close(g.stop)
+}
+
+// Screen returns a pointer to the screen we're capturing
+func (g *XScreenGrabber) Screen() *Screen {
+	return &g.screen
+}
+
+// Fps returns the frames per sec. we're capturing
+func (g *XScreenGrabber) Fps() int {
+	return g.fps
 }
 
 // NewVideoProvider returns an X Server-based video provider
