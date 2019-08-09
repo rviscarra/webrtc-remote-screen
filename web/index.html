@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <link rel="stylesheet" href="/static/css/style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/6.4.0/adapter.min.js"
+    integrity="sha256-UH0Npcih7yj1s23pQK0UCrCSxx7AkT91CCMsUGnZ9Ew=" crossorigin="anonymous"></script>
+  <link href="https://fonts.googleapis.com/css?family=Roboto:300,400&display=swap" rel="stylesheet">
+  <title>WebRTC remote viewer</title>
+</head>
+<body>
+  <div id="app">
+    <div id="controls">
+      <div id="error"></div>
+      <select id="screen-select">
+        <option>Screen 1</option>
+        <option>Screen 2</option>
+      </select>
+      <button id="start-stop">Start</button>
+    </div>
+    <div id="instructions">Select a screen and press Start</div>
+    <video id="remote-video" autoplay muted></video>
+  </div>
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
