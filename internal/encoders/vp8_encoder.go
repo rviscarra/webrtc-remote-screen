@@ -12,8 +12,9 @@ import (
 /*
 #cgo pkg-config: vpx
 #include <stdlib.h>
+#include <string.h>
 #include <vpx/vpx_encoder.h>
-#include "tools_common.h"
+#include <vpx/vp8cx.h>
 
 void rgba_to_yuv(uint8_t *destination, uint8_t *rgba, size_t width, size_t height) {
 	size_t image_size = width * height;
@@ -51,6 +52,39 @@ void rgba_to_yuv(uint8_t *destination, uint8_t *rgba, size_t width, size_t heigh
 	}
 }
 
+int vpx_img_plane_width(const vpx_image_t *img, int plane) {
+  if (plane > 0 && img->x_chroma_shift > 0)
+    return (img->d_w + 1) >> img->x_chroma_shift;
+  else
+    return img->d_w;
+}
+
+int vpx_img_plane_height(const vpx_image_t *img, int plane) {
+  if (plane > 0 && img->y_chroma_shift > 0)
+    return (img->d_h + 1) >> img->y_chroma_shift;
+  else
+    return img->d_h;
+}
+
+int vpx_img_read(vpx_image_t *img, void *bs) {
+  int plane;
+  for (plane = 0; plane < 3; ++plane) {
+    unsigned char *buf = img->planes[plane];
+    const int stride = img->stride[plane];
+    const int w = vpx_img_plane_width(img, plane) *
+                  ((img->fmt & VPX_IMG_FMT_HIGHBITDEPTH) ? 2 : 1);
+    const int h = vpx_img_plane_height(img, plane);
+    int y;
+    for (y = 0; y < h; ++y) {
+      memcpy(buf, bs, w);
+      // if (fread(buf, 1, w, file) != (size_t)w) return 0;
+      buf += stride;
+      bs += w;
+    }
+  }
+  return 1;
+}
+
 int32_t encode_frame(vpx_codec_ctx_t *ctx, vpx_image_t *img, int32_t framec, int32_t flags,
 										 void *rgba, void *yuv_buf, int32_t w, int32_t h, void **encoded_frame) {
 	rgba_to_yuv(yuv_buf, rgba, w, h);
@@ -70,12 +104,12 @@ int32_t encode_frame(vpx_codec_ctx_t *ctx, vpx_image_t *img, int32_t framec, int
 	return 0;
 }
 
-vpx_codec_err_t codec_enc_config_default(const VpxInterface *encoder, vpx_codec_enc_cfg_t *cfg) {
-	return vpx_codec_enc_config_default(encoder->codec_interface(), cfg, 0);
+vpx_codec_err_t codec_enc_config_default(vpx_codec_enc_cfg_t *cfg) {
+	return vpx_codec_enc_config_default(vpx_codec_vp8_cx(), cfg, 0);
 }
 
-vpx_codec_err_t codec_enc_init(vpx_codec_ctx_t *codec, const VpxInterface *encoder, vpx_codec_enc_cfg_t *cfg) {
-	return vpx_codec_enc_init(codec, encoder->codec_interface(), cfg, 0);
+vpx_codec_err_t codec_enc_init(vpx_codec_ctx_t *codec, vpx_codec_enc_cfg_t *cfg) {
+	return vpx_codec_enc_init(codec, vpx_codec_vp8_cx(), cfg, 0);
 }
 
 */
@@ -96,12 +130,9 @@ type VP8Encoder struct {
 
 func newVP8Encoder(size image.Point, frameRate int) (Encoder, error) {
 	buffer := bytes.NewBuffer(make([]byte, 0))
-	codecName := C.CString("vp8")
-	encoder := C.get_vpx_encoder_by_name(codecName)
-	C.free(unsafe.Pointer(codecName))
 
 	var cfg C.vpx_codec_enc_cfg_t
-	if C.codec_enc_config_default(encoder, &cfg) != 0 {
+	if C.codec_enc_config_default(&cfg) != 0 {
 		return nil, fmt.Errorf("Can't init default enc. config")
 	}
 	cfg.g_w = C.uint(size.X)
@@ -112,7 +143,7 @@ func newVP8Encoder(size image.Point, frameRate int) (Encoder, error) {
 	cfg.g_error_resilient = 1
 
 	var vpxCodecCtx C.vpx_codec_ctx_t
-	if C.codec_enc_init(&vpxCodecCtx, encoder, &cfg) != 0 {
+	if C.codec_enc_init(&vpxCodecCtx, &cfg) != 0 {
 		return nil, fmt.Errorf("Failed to initialize enc ctx")
 	}
 	var vpxImage C.vpx_image_t
