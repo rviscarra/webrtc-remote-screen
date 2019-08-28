@@ -38,7 +38,7 @@ func main() {
 
 	var enc encoders.Service = &encoders.EncoderService{}
 	if err != nil {
-		log.Fatalf("Can't create an encoder of codec = %v", encoders.H264Codec)
+		log.Fatalf("Can't create encoder service: %v", err)
 	}
 
 	var webrtc rtc.Service

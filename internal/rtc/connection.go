@@ -7,10 +7,8 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
-	"github.com/pion/rtcp"
 	"github.com/pion/sdp"
 	"github.com/pion/webrtc/v2"
 	"github.com/rviscarra/x-remote-viewer/internal/encoders"
@@ -28,30 +26,38 @@ type RemoteScreenPeerConn struct {
 	encService encoders.Service
 }
 
-const h264SupportedProfile = "3.1"
-
-func findBestCodec(sdp *sdp.SessionDescription, profile string) (*webrtc.RTPCodec, error) {
+func findBestCodec(sdp *sdp.SessionDescription, encService encoders.Service, h264Profile string) (*webrtc.RTPCodec, encoders.VideoCodec, error) {
+	var h264Codec *webrtc.RTPCodec
+	var vp8Codec *webrtc.RTPCodec
 	for _, md := range sdp.MediaDescriptions {
 		for _, format := range md.MediaName.Formats {
 			intPt, err := strconv.Atoi(format)
 			payloadType := uint8(intPt)
 			sdpCodec, err := sdp.GetCodecForPayloadType(payloadType)
 			if err != nil {
-				return nil, fmt.Errorf("Can't find codec for %d", payloadType)
+				return nil, encoders.NoCodec, fmt.Errorf("Can't find codec for %d", payloadType)
 			}
 
-			if sdpCodec.Name == webrtc.H264 {
+			if sdpCodec.Name == webrtc.H264 && h264Codec == nil {
 				packetSupport := strings.Contains(sdpCodec.Fmtp, "packetization-mode=1")
-				supportsProfile := strings.Contains(sdpCodec.Fmtp, fmt.Sprintf("profile-level-id=%s", profile))
+				supportsProfile := strings.Contains(sdpCodec.Fmtp, fmt.Sprintf("profile-level-id=%s", h264Profile))
 				if packetSupport && supportsProfile {
-					var codec = webrtc.NewRTPH264Codec(payloadType, sdpCodec.ClockRate)
-					codec.SDPFmtpLine = sdpCodec.Fmtp
-					return codec, nil
+					h264Codec = webrtc.NewRTPH264Codec(payloadType, sdpCodec.ClockRate)
+					h264Codec.SDPFmtpLine = sdpCodec.Fmtp
 				}
+			} else if sdpCodec.Name == webrtc.VP8 && vp8Codec == nil {
+				vp8Codec = webrtc.NewRTPVP8Codec(payloadType, sdpCodec.ClockRate)
+				vp8Codec.SDPFmtpLine = sdpCodec.Fmtp
 			}
 		}
 	}
-	return nil, fmt.Errorf("Couldn't find a matching codec")
+	if vp8Codec != nil && encService.Supports(encoders.VP8Codec) {
+		return vp8Codec, encoders.VP8Codec, nil
+	}
+	if h264Codec != nil && encService.Supports(encoders.H264Codec) {
+		return h264Codec, encoders.H264Codec, nil
+	}
+	return nil, encoders.NoCodec, fmt.Errorf("Couldn't find a matching codec")
 }
 
 func newRemoteScreenPeerConn(stunServer string, grabber rdisplay.ScreenGrabber, encService encoders.Service) *RemoteScreenPeerConn {
@@ -85,12 +91,12 @@ func (p *RemoteScreenPeerConn) ProcessOffer(strOffer string) (string, error) {
 		return "", err
 	}
 
-	codec, err := findBestCodec(&sdp, "42e01f")
+	webrtcCodec, encCodec, err := findBestCodec(&sdp, p.encService, "42e01f")
 	if err != nil {
 		return "", err
 	}
 	mediaEngine := webrtc.MediaEngine{}
-	mediaEngine.RegisterCodec(codec)
+	mediaEngine.RegisterCodec(webrtcCodec)
 
 	api := webrtc.NewAPI(webrtc.WithMediaEngine(mediaEngine))
 
@@ -120,13 +126,13 @@ func (p *RemoteScreenPeerConn) ProcessOffer(strOffer string) (string, error) {
 	})
 
 	track, err := peerConn.NewTrack(
-		codec.PayloadType,
+		webrtcCodec.PayloadType,
 		uint32(rand.Int31()),
 		uuid.New().String(),
 		fmt.Sprintf("remote-screen"),
 	)
 
-	log.Printf("Using codec %s (%d) %s", codec.Name, codec.PayloadType, codec.SDPFmtpLine)
+	log.Printf("Using codec %s (%d) %s", webrtcCodec.Name, webrtcCodec.PayloadType, webrtcCodec.SDPFmtpLine)
 
 	direction := getTrackDirection(&sdp)
 
@@ -157,15 +163,17 @@ func (p *RemoteScreenPeerConn) ProcessOffer(strOffer string) (string, error) {
 	}
 
 	screen := p.grabber.Screen()
-	size, err := encoders.FindBestSizeForH264Profile(h264SupportedProfile, image.Point{
+	sourceSize := image.Point{
 		screen.Bounds.Dx(),
 		screen.Bounds.Dy(),
-	})
+	}
+
+	encoder, err := p.encService.NewEncoder(encCodec, sourceSize, p.grabber.Fps())
 	if err != nil {
 		return "", err
 	}
 
-	encoder, err := p.encService.NewEncoder(encoders.H264Codec, size, p.grabber.Fps())
+	size, err := encoder.VideoSize()
 	if err != nil {
 		return "", err
 	}
@@ -183,12 +191,15 @@ func (p *RemoteScreenPeerConn) start() {
 	p.streamer.start()
 }
 
-// Close Stops the PLI ticker, the video streamer and closes the WebRTC peer connection
+// Close Stops the video streamer and closes the WebRTC peer connection
 func (p *RemoteScreenPeerConn) Close() error {
 
 	if p.streamer != nil {
 		p.streamer.close()
 	}
 
-	return p.connection.Close()
+	if p.connection != nil {
+		return p.connection.Close()
+	}
+	return nil
 }
