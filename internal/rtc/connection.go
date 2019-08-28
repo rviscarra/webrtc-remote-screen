@@ -23,7 +23,6 @@ type RemoteScreenPeerConn struct {
 	connection *webrtc.PeerConnection
 	stunServer string
 	track      *webrtc.Track
-	pliTicker  *time.Ticker
 	streamer   videoStreamer
 	grabber    rdisplay.ScreenGrabber
 	encService encoders.Service
@@ -180,31 +179,12 @@ func (p *RemoteScreenPeerConn) ProcessOffer(strOffer string) (string, error) {
 	return answer.SDP, nil
 }
 
-// TODO: handle this correctly
 func (p *RemoteScreenPeerConn) start() {
 	p.streamer.start()
-	p.startPLILoop()
-}
-
-func (p *RemoteScreenPeerConn) startPLILoop() {
-	p.pliTicker = time.NewTicker(3 * time.Second)
-	go func() {
-		for range p.pliTicker.C {
-			err := p.connection.WriteRTCP([]rtcp.Packet{
-				&rtcp.PictureLossIndication{MediaSSRC: p.track.SSRC()},
-			})
-			if err != nil {
-				return
-			}
-		}
-	}()
 }
 
 // Close Stops the PLI ticker, the video streamer and closes the WebRTC peer connection
 func (p *RemoteScreenPeerConn) Close() error {
-	if p.pliTicker != nil {
-		p.pliTicker.Stop()
-	}
 
 	if p.streamer != nil {
 		p.streamer.close()
