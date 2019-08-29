@@ -5,8 +5,8 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/rviscarra/x-remote-viewer/internal/rdisplay"
-	"github.com/rviscarra/x-remote-viewer/internal/rtc"
+	"github.com/rviscarra/webrtc-remote-screen/internal/rdisplay"
+	"github.com/rviscarra/webrtc-remote-screen/internal/rtc"
 )
 
 func handleError(w http.ResponseWriter, err error) {

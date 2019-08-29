@@ -3,8 +3,8 @@ package rtc
 import (
 	"fmt"
 
-	"github.com/rviscarra/x-remote-viewer/internal/encoders"
-	"github.com/rviscarra/x-remote-viewer/internal/rdisplay"
+	"github.com/rviscarra/webrtc-remote-screen/internal/encoders"
+	"github.com/rviscarra/webrtc-remote-screen/internal/rdisplay"
 )
 
 // RemoteScreenService is our implementation of the rtc.Service

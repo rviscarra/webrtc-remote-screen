@@ -9,10 +9,10 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/rviscarra/x-remote-viewer/internal/api"
-	"github.com/rviscarra/x-remote-viewer/internal/encoders"
-	"github.com/rviscarra/x-remote-viewer/internal/rdisplay"
-	"github.com/rviscarra/x-remote-viewer/internal/rtc"
+	"github.com/rviscarra/webrtc-remote-screen/internal/api"
+	"github.com/rviscarra/webrtc-remote-screen/internal/encoders"
+	"github.com/rviscarra/webrtc-remote-screen/internal/rdisplay"
+	"github.com/rviscarra/webrtc-remote-screen/internal/rtc"
 )
 
 const (

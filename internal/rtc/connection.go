@@ -11,8 +11,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/pion/sdp"
 	"github.com/pion/webrtc/v2"
-	"github.com/rviscarra/x-remote-viewer/internal/encoders"
-	"github.com/rviscarra/x-remote-viewer/internal/rdisplay"
+	"github.com/rviscarra/webrtc-remote-screen/internal/encoders"
+	"github.com/rviscarra/webrtc-remote-screen/internal/rdisplay"
 )
 
 // RemoteScreenPeerConn is a webrtc.PeerConnection wrapper that implements the

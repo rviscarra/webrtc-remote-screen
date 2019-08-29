@@ -7,8 +7,8 @@ import (
 	"github.com/nfnt/resize"
 	"github.com/pion/webrtc/v2"
 	"github.com/pion/webrtc/v2/pkg/media"
-	"github.com/rviscarra/x-remote-viewer/internal/encoders"
-	"github.com/rviscarra/x-remote-viewer/internal/rdisplay"
+	"github.com/rviscarra/webrtc-remote-screen/internal/encoders"
+	"github.com/rviscarra/webrtc-remote-screen/internal/rdisplay"
 )
 
 func resizeImage(src *image.RGBA, target image.Point) *image.RGBA {
