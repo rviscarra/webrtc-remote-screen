@@ -25,6 +25,6 @@ agent:
 
 .PHONY: clean
 clean:
-	@if [ -f agent ]]; then rm agent; fi
-	@if [ -f agent.tar.gz ]]; then rm agent.tar.gz ; fi
-	@if [ -f agent.zip ]]; then rm agent.zip ; fi
+	@if [ -f agent ]; then rm agent; fi
+	@if [ -f agent.tar.gz ]; then rm agent.tar.gz ; fi
+	@if [ -f agent.zip ]; then rm agent.zip ; fi
