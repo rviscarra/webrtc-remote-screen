@@ -1,4 +1,4 @@
-module github.com/rviscarra/x-remote-viewer
+module github.com/rviscarra/webrtc-remote-screen
 
 go 1.12
 
