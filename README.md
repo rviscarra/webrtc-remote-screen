@@ -22,7 +22,7 @@ Specifies the port where the HTTP server should listen, by default the port 9000
 
 `--stun.server` (Optional)
 
-Allows to speficy a different [STUN](https://es.wikipedia.org/wiki/STUN) server, by default a Google STUN server is used.
+Allows to speficy a different [STUN](https://wikipedia.org/wiki/STUN) server, by default a Google STUN server is used.
 
 Chrome 74+, Firefox 66+, Safari 12.x are supported. Older versions (within reason) should be supported as well but YMMV.
 
